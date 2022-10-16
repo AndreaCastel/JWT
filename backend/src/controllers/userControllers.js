@@ -24,6 +24,24 @@ const createUser = ({ name, email, hashPassword }) => {
     });
 };
 
+const getUserByEmail = (email) => {
+  let user;
+  return sqlDB
+    .query("SELECT * FROM users WHERE email=?", [email])
+    .then(([users]) => {
+      if (users[0] != null) {
+        console.warn("@@@@@", users);
+        // eslint-disable-next-line prefer-destructuring
+        user = users[0];
+        return user;
+      }
+      return null;
+    })
+    .catch((err) => {
+      console.warn("error in getUserByEmail", err);
+    });
+};
+
 const signUp = (req, res) => {
   const { name, email, hashPassword } = req.body;
   return createUser({ name, email, hashPassword })
@@ -43,6 +61,24 @@ const signUp = (req, res) => {
     });
 };
 
+const login = (req, res, next) => {
+  const { email } = req.body;
+  return getUserByEmail(email)
+    .then((user) => {
+      if (!user) {
+        res.sendStatus(401);
+      }
+      req.user = user;
+      next();
+    })
+    .catch((err) => {
+      console.warn("error in login", err);
+      res.sendStatus(400);
+    });
+};
+
 module.exports = {
   signUp,
+  getUserByEmail,
+  login,
 };
